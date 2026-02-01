@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, rooms, participants, swapHistory, InsertRoom, InsertParticipant, InsertSwapHistory } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,138 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Room operations
+export async function createRoom(data: InsertRoom) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(rooms).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getRoomByCode(code: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(rooms).where(eq(rooms.code, code));
+  return result[0] || null;
+}
+
+export async function getRoomById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(rooms).where(eq(rooms.id, id));
+  return result[0] || null;
+}
+
+export async function updateRoom(id: number, data: Partial<InsertRoom>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(rooms).set(data).where(eq(rooms.id, id));
+}
+
+export async function deactivateRoom(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(rooms).set({ isActive: false }).where(eq(rooms.id, id));
+}
+
+// Participant operations
+export async function addParticipant(data: InsertParticipant) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(participants).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getRoomParticipants(roomId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(participants).where(eq(participants.roomId, roomId));
+}
+
+export async function getParticipantById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(participants).where(eq(participants.id, id));
+  return result[0] || null;
+}
+
+export async function updateParticipant(id: number, data: Partial<InsertParticipant>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(participants).set(data).where(eq(participants.id, id));
+}
+
+export async function removeParticipant(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(participants).where(eq(participants.id, id));
+}
+
+export async function setParticipantReady(id: number, isReady: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(participants).set({ isReady }).where(eq(participants.id, id));
+}
+
+// Swap history operations
+export async function recordSwap(data: InsertSwapHistory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(swapHistory).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getRoomSwapHistory(roomId: number, limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(swapHistory)
+    .where(eq(swapHistory.roomId, roomId))
+    .orderBy(desc(swapHistory.createdAt))
+    .limit(limit);
+}
+
+// Utility functions
+export function generateRoomCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export async function isRoomCodeUnique(code: string): Promise<boolean> {
+  const room = await getRoomByCode(code);
+  return room === null;
+}
+
+export async function generateUniqueRoomCode(): Promise<string> {
+  let code = generateRoomCode();
+  let attempts = 0;
+  
+  while (!(await isRoomCodeUnique(code)) && attempts < 10) {
+    code = generateRoomCode();
+    attempts++;
+  }
+  
+  if (attempts >= 10) {
+    throw new Error("Failed to generate unique room code");
+  }
+  
+  return code;
+}

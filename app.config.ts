@@ -28,11 +28,11 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Social Screen Swap",
+  appName: "Screen Swap",
   appSlug: "social-screen-swap",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://s3.us-west-1.amazonaws.com/assets.manus.im/c8f5c8d0-3c3a-4fde-bbb8-2d5f9e8c4b1a.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
