@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { Participant } from "@/drizzle/schema";
+import SessionEnhancedScreen from "./session-enhanced";
 
 const SOCIAL_PLATFORMS = [
   { id: "tiktok", name: "TikTok", color: "#000000" },
@@ -19,7 +20,10 @@ const SOCIAL_PLATFORMS = [
   { id: "facebook", name: "Facebook", color: "#1877F2" },
 ];
 
-export default function SessionScreen() {
+// Re-export the enhanced session screen
+export default SessionEnhancedScreen;
+
+export function SessionScreenLegacy() {
   const params = useLocalSearchParams<{
     roomId: string;
     participantId: string;

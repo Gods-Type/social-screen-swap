@@ -201,6 +201,68 @@ export const appRouter = router({
         return db.getRoomSwapHistory(input.roomId, input.limit);
       }),
   }),
+
+  messages: router({
+    send: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        participantId: z.number(),
+        senderName: z.string().min(1).max(50),
+        content: z.string().min(1).max(500),
+      }))
+      .mutation(async ({ input }) => {
+        const messageId = await db.addMessage({
+          roomId: input.roomId,
+          participantId: input.participantId,
+          senderName: input.senderName,
+          content: input.content,
+        });
+        return { messageId: Number(messageId) };
+      }),
+
+    list: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        limit: z.number().optional().default(50),
+      }))
+      .query(async ({ input }) => {
+        return db.getRoomMessages(input.roomId, input.limit);
+      }),
+  }),
+
+  sessionHistory: router({
+    create: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        hostName: z.string().min(1).max(50),
+        participantCount: z.number(),
+        totalSwaps: z.number().default(0),
+        totalMessages: z.number().default(0),
+        sessionDuration: z.number(),
+        platformsUsed: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const sessionId = await db.createSessionHistory({
+          roomId: input.roomId,
+          hostName: input.hostName,
+          participantCount: input.participantCount,
+          totalSwaps: input.totalSwaps,
+          totalMessages: input.totalMessages,
+          sessionDuration: input.sessionDuration,
+          platformsUsed: input.platformsUsed,
+          endedAt: new Date(),
+        });
+        return { sessionId: Number(sessionId) };
+      }),
+
+    get: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return db.getSessionHistory(input.roomId);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

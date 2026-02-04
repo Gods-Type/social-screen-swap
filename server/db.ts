@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, rooms, participants, swapHistory, InsertRoom, InsertParticipant, InsertSwapHistory } from "../drizzle/schema";
+import { InsertUser, users, rooms, participants, swapHistory, messages, sessionHistory, InsertRoom, InsertParticipant, InsertSwapHistory, InsertMessage, InsertSessionHistory } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -223,4 +223,42 @@ export async function generateUniqueRoomCode(): Promise<string> {
   }
   
   return code;
+}
+
+// Message operations
+export async function addMessage(data: InsertMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(messages).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getRoomMessages(roomId: number, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(messages)
+    .where(eq(messages.roomId, roomId))
+    .orderBy(desc(messages.createdAt))
+    .limit(limit);
+}
+
+// Session history operations
+export async function createSessionHistory(data: InsertSessionHistory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(sessionHistory).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getSessionHistory(roomId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(sessionHistory).where(eq(sessionHistory.roomId, roomId));
+  return result[0] || null;
 }

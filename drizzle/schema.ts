@@ -68,3 +68,33 @@ export type InsertParticipant = typeof participants.$inferInsert;
 
 export type SwapHistory = typeof swapHistory.$inferSelect;
 export type InsertSwapHistory = typeof swapHistory.$inferInsert;
+
+// Messages table - stores in-app chat messages
+export const messages = mysqlTable("messages", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").notNull(),
+  participantId: int("participantId").notNull(),
+  senderName: varchar("senderName", { length: 50 }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Session history table - stores session metadata and statistics
+export const sessionHistory = mysqlTable("sessionHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").notNull(),
+  hostName: varchar("hostName", { length: 50 }).notNull(),
+  participantCount: int("participantCount").notNull(),
+  totalSwaps: int("totalSwaps").default(0).notNull(),
+  totalMessages: int("totalMessages").default(0).notNull(),
+  sessionDuration: int("sessionDuration").notNull(), // in seconds
+  platformsUsed: text("platformsUsed"), // JSON array of platforms
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  endedAt: timestamp("endedAt").notNull(),
+});
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = typeof messages.$inferInsert;
+
+export type SessionHistory = typeof sessionHistory.$inferSelect;
+export type InsertSessionHistory = typeof sessionHistory.$inferInsert;
