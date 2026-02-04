@@ -22,6 +22,13 @@
       "when": 1770198923576,
       "tag": "0002_dusty_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1770199738838,
+      "tag": "0003_closed_thing",
+      "breakpoints": true
     }
   ]
 }

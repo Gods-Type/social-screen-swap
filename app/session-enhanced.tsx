@@ -7,8 +7,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { VideoGrid } from "@/components/video-grid";
 import { ChatPanel } from "@/components/chat-panel";
+import { ReplayPlayer } from "@/components/replay-player";
 import { useVideo } from "@/lib/video-context";
 import { useMessaging } from "@/lib/messaging-context";
+import { useReplay } from "@/lib/replay-context";
 import { trpc } from "@/lib/trpc";
 import { Participant } from "@/drizzle/schema";
 
@@ -45,12 +47,14 @@ export default function SessionEnhancedScreen() {
   const [showPlatformModal, setShowPlatformModal] = useState(false);
   const [showChatPanel, setShowChatPanel] = useState(false);
   const [showSessionHistory, setShowSessionHistory] = useState(false);
+  const [showReplay, setShowReplay] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<string>("none");
   const [sessionStartTime] = useState(Date.now());
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   const { setLocalParticipant, setRemoteParticipants, toggleLocalVideo } = useVideo();
   const { messages, addMessage, setMessages } = useMessaging();
+  const { events, addEvent } = useReplay();
 
   const { data: roomData, refetch } = trpc.rooms.get.useQuery(
     { roomId },
@@ -78,6 +82,7 @@ export default function SessionEnhancedScreen() {
   const recordSwapMutation = trpc.swaps.record.useMutation();
   const sendMessageMutation = trpc.messages.send.useMutation();
   const createSessionHistoryMutation = trpc.sessionHistory.create.useMutation();
+  const recordEventMutation = trpc.replay.recordEvent.useMutation();
   const leaveRoomMutation = trpc.rooms.leave.useMutation();
 
   // Initialize video and messaging
@@ -354,6 +359,17 @@ export default function SessionEnhancedScreen() {
                 {swapHistory?.length || 0} swaps
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowReplay(true)}
+              activeOpacity={0.7}
+              className="flex-1 bg-background border border-border rounded-xl p-3"
+            >
+              <Text className="text-xs text-muted">Replay</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                {events.length} events
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Swap Button */}
@@ -537,6 +553,22 @@ export default function SessionEnhancedScreen() {
                 <Text className="text-foreground font-semibold text-center">Cancel</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </Modal>
+
+        {/* Replay Modal */}
+        <Modal
+          visible={showReplay}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowReplay(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-end">
+            <ReplayPlayer
+              events={events}
+              sessionDuration={Math.floor((Date.now() - sessionStartTime) / 1000)}
+              onClose={() => setShowReplay(false)}
+            />
           </View>
         </Modal>
       </View>

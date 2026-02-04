@@ -98,3 +98,31 @@ export type InsertMessage = typeof messages.$inferInsert;
 
 export type SessionHistory = typeof sessionHistory.$inferSelect;
 export type InsertSessionHistory = typeof sessionHistory.$inferInsert;
+
+// Interaction events table - records all participant actions for replay
+export const interactionEvents = mysqlTable("interactionEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").notNull(),
+  participantId: int("participantId").notNull(),
+  eventType: varchar("eventType", { length: 50 }).notNull(), // 'tap', 'swipe', 'message', 'platform_change', 'video_toggle', 'swap'
+  eventData: text("eventData"), // JSON data specific to event type
+  targetParticipantId: int("targetParticipantId"), // For swap events
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  sessionStartTime: timestamp("sessionStartTime"), // Reference to when session started
+});
+
+export type InteractionEvent = typeof interactionEvents.$inferSelect;
+export type InsertInteractionEvent = typeof interactionEvents.$inferInsert;
+
+// Replay sessions table - stores replay metadata
+export const replaySessions = mysqlTable("replaySessions", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").notNull(),
+  sessionHistoryId: int("sessionHistoryId").notNull(),
+  totalEvents: int("totalEvents").default(0).notNull(),
+  sessionDuration: int("sessionDuration").notNull(), // in seconds
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReplaySession = typeof replaySessions.$inferSelect;
+export type InsertReplaySession = typeof replaySessions.$inferInsert;

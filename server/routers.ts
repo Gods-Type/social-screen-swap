@@ -263,6 +263,63 @@ export const appRouter = router({
         return db.getSessionHistory(input.roomId);
       }),
   }),
+
+  replay: router({
+    recordEvent: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        participantId: z.number(),
+        eventType: z.enum(["tap", "swipe", "message", "platform_change", "video_toggle", "swap"]),
+        eventData: z.string().optional(),
+        targetParticipantId: z.number().optional(),
+        sessionStartTime: z.date().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const eventId = await db.recordInteractionEvent({
+          roomId: input.roomId,
+          participantId: input.participantId,
+          eventType: input.eventType,
+          eventData: input.eventData,
+          targetParticipantId: input.targetParticipantId,
+          sessionStartTime: input.sessionStartTime,
+        });
+        return { eventId: Number(eventId) };
+      }),
+
+    getEvents: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        sessionStartTime: z.date().optional(),
+      }))
+      .query(async ({ input }) => {
+        return db.getSessionEvents(input.roomId, input.sessionStartTime || new Date());
+      }),
+
+    createSession: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+        sessionHistoryId: z.number(),
+        totalEvents: z.number(),
+        sessionDuration: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const sessionId = await db.createReplaySession({
+          roomId: input.roomId,
+          sessionHistoryId: input.sessionHistoryId,
+          totalEvents: input.totalEvents,
+          sessionDuration: input.sessionDuration,
+        });
+        return { sessionId: Number(sessionId) };
+      }),
+
+    getSession: publicProcedure
+      .input(z.object({
+        roomId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return db.getReplaySession(input.roomId);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

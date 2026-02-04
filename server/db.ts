@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, rooms, participants, swapHistory, messages, sessionHistory, InsertRoom, InsertParticipant, InsertSwapHistory, InsertMessage, InsertSessionHistory } from "../drizzle/schema";
+import { InsertUser, users, rooms, participants, swapHistory, messages, sessionHistory, interactionEvents, replaySessions, InsertRoom, InsertParticipant, InsertSwapHistory, InsertMessage, InsertSessionHistory, InsertInteractionEvent, InsertReplaySession } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -260,5 +260,53 @@ export async function getSessionHistory(roomId: number) {
   if (!db) return null;
   
   const result = await db.select().from(sessionHistory).where(eq(sessionHistory.roomId, roomId));
+  return result[0] || null;
+}
+
+// Interaction event operations
+export async function recordInteractionEvent(data: InsertInteractionEvent) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(interactionEvents).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getSessionEvents(roomId: number, sessionStartTime: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(interactionEvents)
+    .where(eq(interactionEvents.roomId, roomId))
+    .orderBy(interactionEvents.timestamp);
+}
+
+export async function getParticipantEvents(roomId: number, participantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(interactionEvents)
+    .where(eq(interactionEvents.roomId, roomId))
+    .orderBy(interactionEvents.timestamp);
+}
+
+// Replay session operations
+export async function createReplaySession(data: InsertReplaySession) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(replaySessions).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getReplaySession(roomId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(replaySessions).where(eq(replaySessions.roomId, roomId));
   return result[0] || null;
 }

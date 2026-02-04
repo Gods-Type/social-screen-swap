@@ -35,3 +35,15 @@
 - [x] Video chat UI with participant video streams
 - [x] Messaging UI with chat history
 - [x] Session history display and analytics
+
+
+## Replay System - Phase 3
+
+- [x] Database schema for interaction events (touches, swaps, messages, platform changes)
+- [x] Backend API for recording interactions
+- [x] Backend API for retrieving replay data
+- [x] Replay timeline component with event markers
+- [x] Replay playback controls (play, pause, speed, seek)
+- [x] Replay animation and event visualization
+- [x] Replay screen showing participant actions
+- [x] Integration with session history screen
